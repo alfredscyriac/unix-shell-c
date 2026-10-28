@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define PROMPT "CS340Shell% "
 #define MAX_LINE 1024
@@ -35,9 +38,19 @@ int main(void){
             break;
         }
 
-        for (int i = 0; i < argc; i++) {
-            printf("argv[%d] = [%s]\n", i, argv[i]);
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("fork");
+            continue;
         }
+
+        if (pid == 0) {
+            execv(argv[0], argv);
+            perror(argv[0]);
+            _exit(127);
+        }
+
+        waitpid(pid, NULL, 0);
     }
 
     return 0;
