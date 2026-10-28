@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -8,7 +10,29 @@
 #define MAX_LINE 1024
 #define MAX_ARGS 64
 
-int main(void){
+static int run_builtin(char *argv[]) {
+    if (strcmp(argv[0], "exit") == 0) {
+        exit(0);
+    }
+
+    if (strcmp(argv[0], "cd") == 0) {
+        const char *dir = argv[1] ? argv[1] : getenv("HOME");
+        if (dir == NULL || chdir(dir) != 0) {
+            perror("cd");
+        }
+        return 1;
+    }
+
+    if (strcmp(argv[0], "time") == 0) {
+        time_t now = time(NULL);
+        printf("%s", ctime(&now));
+        return 1;
+    }
+
+    return 0;
+}
+
+int main(void) {
     char line[MAX_LINE];
     char *argv[MAX_ARGS];
 
@@ -34,8 +58,9 @@ int main(void){
         if (argc == 0) {
             continue;
         }
-        if (strcmp(line,"exit") == 0) {
-            break;
+
+        if (run_builtin(argv)) {
+            continue;
         }
 
         pid_t pid = fork();
@@ -43,13 +68,11 @@ int main(void){
             perror("fork");
             continue;
         }
-
         if (pid == 0) {
             execv(argv[0], argv);
             perror(argv[0]);
             _exit(127);
         }
-
         waitpid(pid, NULL, 0);
     }
 
