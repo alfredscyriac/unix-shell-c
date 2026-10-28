@@ -12,12 +12,14 @@
 #define MAX_ARGS   64
 #define MAX_STAGES 32
 
+/* One command in a pipeline */
 typedef struct {
     char *argv[MAX_ARGS];
     char *infile;
     char *outfile;
 } Command;
 
+/* Splits one pipeline segment into words and < / > files. Returns total word count */
 static int parse_command(char *segment, Command *cmd) {
     int argc = 0;
     char *save = NULL;
@@ -40,6 +42,7 @@ static int parse_command(char *segment, Command *cmd) {
     return argc;
 }
 
+/* Splits the line on every '|' and parses each piece individuallys. Returns the total command count */
 static int parse_line(char *line, Command cmds[]) {
     int n = 0;
     char *save = NULL;
@@ -54,6 +57,7 @@ static int parse_line(char *line, Command cmds[]) {
     return n;
 }
 
+/* Runs exit, cd or time in the shell itself. Returns 1 if handled, else 0 */
 static int run_builtin(const Command *cmd) {
     const char *name = cmd->argv[0];
 
@@ -78,6 +82,7 @@ static int run_builtin(const Command *cmd) {
     return 0;
 }
 
+/* Applies < and >, this is the same pattern from ExCode/03-IPC/redir.c */
 static void apply_redirections(const Command *cmd) {
     if (cmd->infile != NULL) {
         int fd = open(cmd->infile, O_RDONLY);
@@ -100,13 +105,17 @@ static void apply_redirections(const Command *cmd) {
     }
 }
 
+/*
+ * Forks one child per command, connects them with pipes, and waits for all.
+ * Pipe wiring follows pattern from ExCode/03-IPC/shell.c
+ */
 static void run_pipeline(Command cmds[], int n) {
     pid_t pids[MAX_STAGES];
     int started = 0;
-    int prev_read = -1;
+    int prev_read = -1;                  
 
     for (int i = 0; i < n; i++) {
-        int pipefd[2] = { -1, -1 };
+        int pipefd[2] = { -1, -1 };      
 
         if (i < n - 1 && pipe(pipefd) < 0) {
             perror("pipe");
