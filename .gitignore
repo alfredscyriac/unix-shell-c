@@ -1,0 +1,5 @@
+/shell
+*.o
+*.dSYM/
+out.txt
+dir.txt
