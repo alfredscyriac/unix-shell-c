@@ -1,4 +1,5 @@
-/shell
+shell
+pipedemo
 *.o
 *.dSYM/
 out.txt

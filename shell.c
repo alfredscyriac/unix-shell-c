@@ -115,7 +115,7 @@ static void run_pipeline(Command cmds[], int n) {
     int prev_read = -1;                  
 
     for (int i = 0; i < n; i++) {
-        int pipefd[2] = { -1, -1 };      
+        int pipefd[2] = { -1, -1 };      /* -1 means no pipe for this command */
 
         if (i < n - 1 && pipe(pipefd) < 0) {
             perror("pipe");
